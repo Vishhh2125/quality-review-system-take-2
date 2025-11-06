@@ -45,6 +45,7 @@ class Sidebar extends StatelessWidget {
           const SizedBox(height: 32),
 
           // Nav items
+<<<<<<< HEAD
           SidebarItem(
             icon: Icons.dashboard,
             label: "Dashboard",
@@ -64,6 +65,10 @@ class Sidebar extends StatelessWidget {
             active: selectedIndex == 3,
             onTap: () => onItemSelected?.call(3),
           ),
+=======
+          SidebarItem(icon: Icons.dashboard, label: "Dashboard", active: selectedIndex == 0, onTap: () => onItemSelected?.call(0)),
+          SidebarItem(icon: Icons.group, label: "Employees", active: selectedIndex == 1, onTap: () => onItemSelected?.call(1)),
+>>>>>>> d9a0eb349db24bcd618379ca0ee92bab663ce1d3
           const Spacer(),
 
           const SizedBox(height: 16),

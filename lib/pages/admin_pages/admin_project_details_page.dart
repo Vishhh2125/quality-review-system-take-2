@@ -94,7 +94,31 @@ class _AdminProjectDetailsPageState extends State<AdminProjectDetailsPage> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(_description.isNotEmpty ? _description : 'No description provided.'),
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     const Align(
+                       alignment: Alignment.centerLeft,
+                       child: Padding(
+                         padding: EdgeInsets.only(bottom: 6),
+                         child: Text('Description *', style: TextStyle(fontWeight: FontWeight.w600)),
+                       ),
+                     ),
+                     TextFormField(
+                       initialValue: _description.isNotEmpty ? _description : '',
+                       minLines: 10,
+                       maxLines: 16,
+                       textAlignVertical: TextAlignVertical.top,
+                       decoration: const InputDecoration(
+                         hintText: 'Enter description...',
+                         border: OutlineInputBorder(),
+                         contentPadding: EdgeInsets.all(12),
+                       ),
+                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter description' : null,
+                       onSaved: (v) => _description = v!.trim(),
+                     ),
+                   ],
+                 ),
               ),
             ),
             const SizedBox(height: 24),
@@ -294,6 +318,8 @@ class _AdminProjectDetailsPageState extends State<AdminProjectDetailsPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
+                        // Description at bottom
+                        
                         DropdownButtonFormField<String>(
                           initialValue: priority,
                           items: const ['High', 'Medium', 'Low']
@@ -321,11 +347,17 @@ class _AdminProjectDetailsPageState extends State<AdminProjectDetailsPage> {
                           decoration: const InputDecoration(labelText: 'Executor (optional)'),
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
+                         TextFormField(
                           initialValue: description,
                           minLines: 10,
                           maxLines: 16,
-                          decoration: const InputDecoration(labelText: 'Description *'),
+                          textAlignVertical: TextAlignVertical.top,
+                          decoration: const InputDecoration(
+                            labelText: 'Description *',
+                            hintText: 'Enter description...',
+                            alignLabelWithHint: true,
+                            contentPadding: EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 12),
+                          ),
                           validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter description' : null,
                           onSaved: (v) => description = v!.trim(),
                         ),

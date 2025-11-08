@@ -484,7 +484,7 @@ class _ProjectFormDialogState extends State<_ProjectFormDialog> {
       color: Colors.transparent,
       child: Container(
         width: widget.width ?? 520,
-        height: 500,
+        height: 600,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -520,8 +520,12 @@ class _ProjectFormDialogState extends State<_ProjectFormDialog> {
                 const SizedBox(height: 12),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    // Always single column layout so Description can be large.
+                    // Always single column layout. Place Description at the top.
                     final List<Widget> fields = [
+                      // Large description area at top
+                      // Description
+                      
+                      
                       // Title
                       TextFormField(
                         initialValue: data.title,
@@ -595,17 +599,6 @@ class _ProjectFormDialogState extends State<_ProjectFormDialog> {
                         ),
                       );
                     }
-                    // Large description area
-                    fields.add(
-                      TextFormField(
-                        initialValue: data.description,
-                        minLines: 10,
-                        maxLines: 16,
-                        decoration: const InputDecoration(labelText: 'Description *'),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter description' : null,
-                        onSaved: (v) => data.description = v!.trim(),
-                      ),
-                    );
                     return Column(
                       children: [
                         for (int i = 0; i < fields.length; i++) ...[
@@ -616,6 +609,30 @@ class _ProjectFormDialogState extends State<_ProjectFormDialog> {
                     );
                   },
                 ),
+                const SizedBox(height: 12),
+                const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            'Description *',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                      TextFormField(
+                        initialValue: data.description,
+                        minLines: 10,
+                        maxLines: 16,
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter description...',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.all(12),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter description' : null,
+                        onSaved: (v) => data.description = v!.trim(),
+                      ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

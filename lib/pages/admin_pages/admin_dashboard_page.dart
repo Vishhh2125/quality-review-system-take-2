@@ -598,7 +598,8 @@ class _ProjectFormDialogState extends State<_ProjectFormDialog> {
                           decoration: const InputDecoration(labelText: 'Executor (optional)'),
                         ),
                       );
-                    }
+                    } 
+                    
                     return Column(
                       children: [
                         for (int i = 0; i < fields.length; i++) ...[

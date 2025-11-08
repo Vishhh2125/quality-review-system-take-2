@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../models/project.dart';
 import '../../controllers/projects_controller.dart';
-import 'employee_project_detail_page.dart';
+import 'my_project_detail_page.dart';
 
 class Myproject extends StatefulWidget {
   const Myproject({super.key});
@@ -74,7 +74,7 @@ class _MyprojectState extends State<Myproject> {
 
   void _openProjectDetails(Project project) {
     Get.to(
-      () => EmployeeProjectDetailPage(
+      () => MyProjectDetailPage(
         project: project,
         description: project.description,
       ),

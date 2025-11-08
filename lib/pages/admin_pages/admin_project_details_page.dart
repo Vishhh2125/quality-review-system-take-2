@@ -243,7 +243,7 @@ class _AdminProjectDetailsPageState extends State<AdminProjectDetailsPage> {
       barrierColor: Colors.black54,
       barrierLabel: 'Edit Project Dialog',
       transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
       transitionBuilder: (context, animation, secondary, child) {
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
@@ -416,7 +416,7 @@ class _AdminProjectDetailsPageState extends State<AdminProjectDetailsPage> {
       barrierColor: Colors.black54,
       barrierLabel: 'Delete Project Dialog',
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
       transitionBuilder: (context, animation, secondary, child) {
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),

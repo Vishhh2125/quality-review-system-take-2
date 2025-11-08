@@ -140,7 +140,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       barrierColor: Colors.black54,
       barrierLabel: 'Create Project Dialog',
       transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),

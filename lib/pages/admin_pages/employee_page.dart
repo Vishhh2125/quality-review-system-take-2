@@ -23,11 +23,51 @@ class _TeamPageState extends State<EmployeePage> {
 
     if (_ctrl.members.isEmpty) {
       _ctrl.loadInitial([
-        TeamMember(id: 't1', name: 'Emma Carter', email: 'emma.carter@example.com', role: 'Team Leader', status: 'Active', dateAdded: '2023-08-15', lastActive: '2024-05-20'),
-        TeamMember(id: 't2', name: 'Liam Walker', email: 'liam.walker@example.com', role: 'Member', status: 'Active', dateAdded: '2023-09-22', lastActive: '2024-05-21'),
-        TeamMember(id: 't3', name: 'Olivia Harris', email: 'olivia.harris@example.com', role: 'Reviewer', status: 'Inactive', dateAdded: '2023-10-10', lastActive: '2024-04-30'),
-        TeamMember(id: 't4', name: 'Noah Clark', email: 'noah.clark@example.com', role: 'Member', status: 'Active', dateAdded: '2023-11-05', lastActive: '2024-05-19'),
-        TeamMember(id: 't5', name: 'Ava Lewis', email: 'ava.lewis@example.com', role: 'Team Leader', status: 'Pending', dateAdded: '2023-12-18', lastActive: 'Never'),
+        TeamMember(
+          id: 't1',
+          name: 'Emma Carter',
+          email: 'emma.carter@example.com',
+          role: 'Team Leader',
+          status: 'Active',
+          dateAdded: '2023-08-15',
+          lastActive: '2024-05-20',
+        ),
+        TeamMember(
+          id: 't2',
+          name: 'Liam Walker',
+          email: 'liam.walker@example.com',
+          role: 'Member',
+          status: 'Active',
+          dateAdded: '2023-09-22',
+          lastActive: '2024-05-21',
+        ),
+        TeamMember(
+          id: 't3',
+          name: 'Olivia Harris',
+          email: 'olivia.harris@example.com',
+          role: 'Reviewer',
+          status: 'Inactive',
+          dateAdded: '2023-10-10',
+          lastActive: '2024-04-30',
+        ),
+        TeamMember(
+          id: 't4',
+          name: 'Noah Clark',
+          email: 'noah.clark@example.com',
+          role: 'Member',
+          status: 'Active',
+          dateAdded: '2023-11-05',
+          lastActive: '2024-05-19',
+        ),
+        TeamMember(
+          id: 't5',
+          name: 'Ava Lewis',
+          email: 'ava.lewis@example.com',
+          role: 'Team Leader',
+          status: 'Pending',
+          dateAdded: '2023-12-18',
+          lastActive: 'Never',
+        ),
       ]);
     }
   }
@@ -47,16 +87,16 @@ class _TeamPageState extends State<EmployeePage> {
     final formKey = GlobalKey<FormState>();
     String name = '';
     String email = '';
-  String role = 'Executor/Reviewer';
+    String role = 'Executor/Reviewer';
     String password = '';
-  bool obscure = true;
+    bool obscure = true;
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierColor: Colors.black54,
       barrierLabel: 'Add Employee Dialog',
       transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
       transitionBuilder: (context, animation, secondary, child) {
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
@@ -70,7 +110,11 @@ class _TeamPageState extends State<EmployeePage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 16, offset: Offset(0, 8)),
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
                   ],
                 ),
                 child: Form(
@@ -83,7 +127,13 @@ class _TeamPageState extends State<EmployeePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Add Team Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            const Text(
+                              'Add Team Member',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             IconButton(
                               onPressed: () => Navigator.of(context).pop(),
                               icon: const Icon(Icons.close),
@@ -93,10 +143,13 @@ class _TeamPageState extends State<EmployeePage> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
-                          decoration: const InputDecoration(labelText: 'Full name *'),
+                          decoration: const InputDecoration(
+                            labelText: 'Full name *',
+                          ),
                           textInputAction: TextInputAction.next,
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Enter name';
+                            if (v == null || v.trim().isEmpty)
+                              return 'Enter name';
                             if (v.trim().length < 2) return 'Name too short';
                             return null;
                           },
@@ -105,15 +158,24 @@ class _TeamPageState extends State<EmployeePage> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
-                          decoration: const InputDecoration(labelText: 'Email *'),
+                          decoration: const InputDecoration(
+                            labelText: 'Email *',
+                          ),
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Enter email';
+                            if (v == null || v.trim().isEmpty)
+                              return 'Enter email';
                             final value = v.trim();
-                            final gmailPattern = RegExp(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$');
-                            if (!gmailPattern.hasMatch(value)) return 'Invalid email format';
-                            final exists = _ctrl.members.any((m) => m.email.toLowerCase() == value.toLowerCase());
+                            final gmailPattern = RegExp(
+                              r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$',
+                            );
+                            if (!gmailPattern.hasMatch(value))
+                              return 'Invalid email format';
+                            final exists = _ctrl.members.any(
+                              (m) =>
+                                  m.email.toLowerCase() == value.toLowerCase(),
+                            );
                             if (exists) return 'Email already in use';
                             return null;
                           },
@@ -123,10 +185,15 @@ class _TeamPageState extends State<EmployeePage> {
                         DropdownButtonFormField<String>(
                           initialValue: role,
                           items: ['Team Leader', 'Executor/Reviewer']
-                              .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                              .map(
+                                (r) =>
+                                    DropdownMenuItem(value: r, child: Text(r)),
+                              )
                               .toList(),
                           onChanged: (v) => role = v ?? role,
-                          decoration: const InputDecoration(labelText: 'Role *'),
+                          decoration: const InputDecoration(
+                            labelText: 'Role *',
+                          ),
                         ),
                         const SizedBox(height: 12),
                         StatefulBuilder(
@@ -135,17 +202,26 @@ class _TeamPageState extends State<EmployeePage> {
                               decoration: InputDecoration(
                                 labelText: 'Password *',
                                 suffixIcon: IconButton(
-                                  icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setInner(() => obscure = !obscure),
-                                  tooltip: obscure ? 'Show password' : 'Hide password',
+                                  icon: Icon(
+                                    obscure
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () =>
+                                      setInner(() => obscure = !obscure),
+                                  tooltip: obscure
+                                      ? 'Show password'
+                                      : 'Hide password',
                                 ),
                               ),
                               obscureText: obscure,
                               textInputAction: TextInputAction.done,
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'Enter password';
+                                if (v == null || v.isEmpty)
+                                  return 'Enter password';
                                 if (v.length < 6) return 'Min 6 chars';
-                                if (!RegExp(r'[A-Za-z]').hasMatch(v) || !RegExp(r'\d').hasMatch(v)) {
+                                if (!RegExp(r'[A-Za-z]').hasMatch(v) ||
+                                    !RegExp(r'\d').hasMatch(v)) {
                                   return 'Include letter & number';
                                 }
                                 return null;
@@ -168,18 +244,26 @@ class _TeamPageState extends State<EmployeePage> {
                                 if (formKey.currentState?.validate() ?? false) {
                                   formKey.currentState?.save();
                                   final newMember = TeamMember(
-                                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                    id: DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
                                     name: name,
                                     email: email,
                                     role: role,
                                     status: 'Active',
-                                    dateAdded: DateTime.now().toIso8601String().split('T').first,
+                                    dateAdded: DateTime.now()
+                                        .toIso8601String()
+                                        .split('T')
+                                        .first,
                                     lastActive: 'Never',
                                     password: password,
                                   );
                                   _ctrl.addMember(newMember);
                                   Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Member added')));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Member added'),
+                                    ),
+                                  );
                                 }
                               },
                               child: const Text('Add Member'),
@@ -202,9 +286,11 @@ class _TeamPageState extends State<EmployeePage> {
     final formKey = GlobalKey<FormState>();
     String name = m.name;
     String email = m.email;
-  String role = (m.role == 'Team Leader') ? 'Team Leader' : 'Executor/Reviewer';
+    String role = (m.role == 'Team Leader')
+        ? 'Team Leader'
+        : 'Executor/Reviewer';
     String password = m.password ?? '';
-  bool obscure = true;
+    bool obscure = true;
 
     await showGeneralDialog(
       context: context,
@@ -212,7 +298,7 @@ class _TeamPageState extends State<EmployeePage> {
       barrierColor: Colors.black54,
       barrierLabel: 'Edit Employee Dialog',
       transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
       transitionBuilder: (context, animation, secondary, child) {
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
@@ -226,7 +312,11 @@ class _TeamPageState extends State<EmployeePage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 16, offset: Offset(0, 8)),
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
                   ],
                 ),
                 child: Form(
@@ -239,7 +329,13 @@ class _TeamPageState extends State<EmployeePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Edit Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            const Text(
+                              'Edit Member',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             IconButton(
                               onPressed: () => Navigator.of(context).pop(),
                               icon: const Icon(Icons.close),
@@ -250,10 +346,13 @@ class _TeamPageState extends State<EmployeePage> {
                         const SizedBox(height: 12),
                         TextFormField(
                           initialValue: name,
-                          decoration: const InputDecoration(labelText: 'Full name *'),
+                          decoration: const InputDecoration(
+                            labelText: 'Full name *',
+                          ),
                           textInputAction: TextInputAction.next,
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Enter name';
+                            if (v == null || v.trim().isEmpty)
+                              return 'Enter name';
                             if (v.trim().length < 2) return 'Name too short';
                             return null;
                           },
@@ -263,15 +362,25 @@ class _TeamPageState extends State<EmployeePage> {
                         const SizedBox(height: 12),
                         TextFormField(
                           initialValue: email,
-                          decoration: const InputDecoration(labelText: 'Email *'),
+                          decoration: const InputDecoration(
+                            labelText: 'Email *',
+                          ),
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Enter email';
+                            if (v == null || v.trim().isEmpty)
+                              return 'Enter email';
                             final value = v.trim();
-                            final gmailPattern = RegExp(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$');
-                            if (!gmailPattern.hasMatch(value)) return 'Invalid email format';
-                            final exists = _ctrl.members.any((mm) => mm.id != m.id && mm.email.toLowerCase() == value.toLowerCase());
+                            final gmailPattern = RegExp(
+                              r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$',
+                            );
+                            if (!gmailPattern.hasMatch(value))
+                              return 'Invalid email format';
+                            final exists = _ctrl.members.any(
+                              (mm) =>
+                                  mm.id != m.id &&
+                                  mm.email.toLowerCase() == value.toLowerCase(),
+                            );
                             if (exists) return 'Email already in use';
                             return null;
                           },
@@ -281,10 +390,15 @@ class _TeamPageState extends State<EmployeePage> {
                         DropdownButtonFormField<String>(
                           initialValue: role,
                           items: ['Team Leader', 'Executor/Reviewer']
-                              .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                              .map(
+                                (r) =>
+                                    DropdownMenuItem(value: r, child: Text(r)),
+                              )
                               .toList(),
                           onChanged: (v) => role = v ?? role,
-                          decoration: const InputDecoration(labelText: 'Role *'),
+                          decoration: const InputDecoration(
+                            labelText: 'Role *',
+                          ),
                         ),
                         const SizedBox(height: 12),
                         StatefulBuilder(
@@ -294,17 +408,26 @@ class _TeamPageState extends State<EmployeePage> {
                               decoration: InputDecoration(
                                 labelText: 'Password *',
                                 suffixIcon: IconButton(
-                                  icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setInner(() => obscure = !obscure),
-                                  tooltip: obscure ? 'Show password' : 'Hide password',
+                                  icon: Icon(
+                                    obscure
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () =>
+                                      setInner(() => obscure = !obscure),
+                                  tooltip: obscure
+                                      ? 'Show password'
+                                      : 'Hide password',
                                 ),
                               ),
                               obscureText: obscure,
                               textInputAction: TextInputAction.done,
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'Enter password';
+                                if (v == null || v.isEmpty)
+                                  return 'Enter password';
                                 if (v.length < 6) return 'Min 6 chars';
-                                if (!RegExp(r'[A-Za-z]').hasMatch(v) || !RegExp(r'\d').hasMatch(v)) {
+                                if (!RegExp(r'[A-Za-z]').hasMatch(v) ||
+                                    !RegExp(r'\d').hasMatch(v)) {
                                   return 'Include letter & number';
                                 }
                                 return null;
@@ -326,10 +449,19 @@ class _TeamPageState extends State<EmployeePage> {
                               onPressed: () {
                                 if (formKey.currentState?.validate() ?? false) {
                                   formKey.currentState?.save();
-                                  final updated = m.copyWith(name: name, email: email, role: role, password: password);
+                                  final updated = m.copyWith(
+                                    name: name,
+                                    email: email,
+                                    role: role,
+                                    password: password,
+                                  );
                                   _ctrl.updateMember(m.id, updated);
                                   Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Member updated')));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Member updated'),
+                                    ),
+                                  );
                                 }
                               },
                               child: const Text('Save Changes'),
@@ -355,7 +487,7 @@ class _TeamPageState extends State<EmployeePage> {
       barrierColor: Colors.black54,
       barrierLabel: 'Delete Member Dialog',
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      pageBuilder: (_, _, _) => const SizedBox.shrink(),
       transitionBuilder: (context, animation, secondary, child) {
         return ScaleTransition(
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
@@ -369,7 +501,11 @@ class _TeamPageState extends State<EmployeePage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 16, offset: Offset(0, 8)),
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
                   ],
                 ),
                 child: Column(
@@ -379,7 +515,13 @@ class _TeamPageState extends State<EmployeePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Delete Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        const Text(
+                          'Delete Member',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(false),
                           icon: const Icon(Icons.close),
@@ -399,7 +541,9 @@ class _TeamPageState extends State<EmployeePage> {
                         ),
                         const SizedBox(width: 12),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                          ),
                           onPressed: () => Navigator.of(context).pop(true),
                           child: const Text('Delete'),
                         ),
@@ -431,14 +575,22 @@ class _TeamPageState extends State<EmployeePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('User Management', style: Theme.of(context).textTheme.headlineMedium),
+                      Text(
+                        'User Management',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                       ElevatedButton.icon(
                         onPressed: _showAddDialog,
                         icon: const Icon(Icons.add),
                         label: const Text('Add New User'),
                         style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -446,7 +598,9 @@ class _TeamPageState extends State<EmployeePage> {
                   const SizedBox(height: 20),
                   Card(
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SingleChildScrollView(
@@ -464,7 +618,11 @@ class _TeamPageState extends State<EmployeePage> {
                                   setState(() {
                                     _sortColumnIndex = colIndex;
                                     _sortAscending = asc;
-                                    _ctrl.members.sort((a, b) => asc ? a.name.compareTo(b.name) : b.name.compareTo(a.name));
+                                    _ctrl.members.sort(
+                                      (a, b) => asc
+                                          ? a.name.compareTo(b.name)
+                                          : b.name.compareTo(a.name),
+                                    );
                                   });
                                 },
                               ),
@@ -477,7 +635,11 @@ class _TeamPageState extends State<EmployeePage> {
                                   setState(() {
                                     _sortColumnIndex = colIndex;
                                     _sortAscending = asc;
-                                    _ctrl.members.sort((a, b) => asc ? a.dateAdded.compareTo(b.dateAdded) : b.dateAdded.compareTo(a.dateAdded));
+                                    _ctrl.members.sort(
+                                      (a, b) => asc
+                                          ? a.dateAdded.compareTo(b.dateAdded)
+                                          : b.dateAdded.compareTo(a.dateAdded),
+                                    );
                                   });
                                 },
                               ),
@@ -485,15 +647,60 @@ class _TeamPageState extends State<EmployeePage> {
                               const DataColumn(label: Text('Actions')),
                             ],
                             rows: list.map((e) {
-                              return DataRow(cells: [
-                                DataCell(Row(children: [CircleAvatar(radius: 18, child: Text(e.name[0])), const SizedBox(width: 12), Text(e.name)])),
-                                DataCell(Text(e.email)),
-                                DataCell(_roleChip(e.role == 'Team Leader' ? 'Team Leader' : 'Executor/Reviewer')),
-                                DataCell(Text(e.password != null && e.password!.isNotEmpty ? '••••••' : 'Not Set')),
-                                DataCell(Text(e.dateAdded)),
-                                DataCell(Text(e.lastActive)),
-                                DataCell(Row(children: [IconButton(onPressed: () => _showEditDialog(e), icon: const Icon(Icons.edit, size: 20)), IconButton(onPressed: () => _confirmDelete(e), icon: const Icon(Icons.delete_outline, size: 20))])),
-                              ]);
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 18,
+                                          child: Text(e.name[0]),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(e.name),
+                                      ],
+                                    ),
+                                  ),
+                                  DataCell(Text(e.email)),
+                                  DataCell(
+                                    _roleChip(
+                                      e.role == 'Team Leader'
+                                          ? 'Team Leader'
+                                          : 'Executor/Reviewer',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      e.password != null &&
+                                              e.password!.isNotEmpty
+                                          ? '••••••'
+                                          : 'Not Set',
+                                    ),
+                                  ),
+                                  DataCell(Text(e.dateAdded)),
+                                  DataCell(Text(e.lastActive)),
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          onPressed: () => _showEditDialog(e),
+                                          icon: const Icon(
+                                            Icons.edit,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed: () => _confirmDelete(e),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
                             }).toList(),
                           );
                         }),
@@ -510,48 +717,71 @@ class _TeamPageState extends State<EmployeePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Filters', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Filters',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 12),
                 Card(
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Filter by Role', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const Text(
+                          'Filter by Role',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         const SizedBox(height: 8),
-                        Obx(() => Column(children: [
-                          CheckboxListTile(
-                            value: _ctrl.selectedRoles.contains('Team Leader'),
-                            onChanged: (v) => v == true
-                                ? _ctrl.selectedRoles.add('Team Leader')
-                                : _ctrl.selectedRoles.remove('Team Leader'),
-                            title: const Text('Team Leader'),
+                        Obx(
+                          () => Column(
+                            children: [
+                              CheckboxListTile(
+                                value: _ctrl.selectedRoles.contains(
+                                  'Team Leader',
+                                ),
+                                onChanged: (v) => v == true
+                                    ? _ctrl.selectedRoles.add('Team Leader')
+                                    : _ctrl.selectedRoles.remove('Team Leader'),
+                                title: const Text('Team Leader'),
+                              ),
+                              CheckboxListTile(
+                                value: _ctrl.selectedRoles.contains(
+                                  'Executor/Reviewer',
+                                ),
+                                onChanged: (v) => v == true
+                                    ? _ctrl.selectedRoles.add(
+                                        'Executor/Reviewer',
+                                      )
+                                    : _ctrl.selectedRoles.remove(
+                                        'Executor/Reviewer',
+                                      ),
+                                title: const Text('Executor/Reviewer'),
+                              ),
+                            ],
                           ),
-                          CheckboxListTile(
-                            value: _ctrl.selectedRoles.contains('Executor/Reviewer'),
-                            onChanged: (v) => v == true
-                                ? _ctrl.selectedRoles.add('Executor/Reviewer')
-                                : _ctrl.selectedRoles.remove('Executor/Reviewer'),
-                            title: const Text('Executor/Reviewer'),
-                          ),
-                        ])),
+                        ),
                         const SizedBox(height: 12),
                         // Status filters removed.
                         ElevatedButton(
                           onPressed: () => _ctrl.clearFilters(),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF2F5F8), foregroundColor: Colors.black),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF2F5F8),
+                            foregroundColor: Colors.black,
+                          ),
                           child: const Text('Clear Filters'),
-                        )
+                        ),
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

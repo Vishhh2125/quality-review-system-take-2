@@ -82,7 +82,6 @@ class AdminDashboardPage extends StatelessWidget {
         title: 'Create New Project',
         width: 1000,
         child: _ProjectFormDialog(
-          title: 'Create New Project',
           executors: _executors(),
           titleValidator: (t) {
             final exists = projCtrl.projects.any(
@@ -420,7 +419,6 @@ class ProjectFormData {
 }
 
 class _ProjectFormDialog extends StatefulWidget {
-  final String title;
   final void Function(ProjectFormData data) onSubmit;
   final List<String>? executors;
   final String? Function(String)? titleValidator;
@@ -428,7 +426,6 @@ class _ProjectFormDialog extends StatefulWidget {
   final bool showStatus;
   final bool showExecutor;
   const _ProjectFormDialog({
-    required this.title,
     required this.onSubmit,
     this.executors,
     this.titleValidator,
@@ -463,218 +460,171 @@ class _ProjectFormDialogState extends State<_ProjectFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        width: widget.width ?? 520,
-        height: 600,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 16,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Always single column layout. Place Description at the top.
-                    final List<Widget> fields = [
-                      // Large description area at top
-                      // Description
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Always single column layout. Place Description at the top.
+                final List<Widget> fields = [
+                  // Large description area at top
+                  // Description
 
-                      // Title
-                      TextFormField(
-                        initialValue: data.title,
+                  // Title
+                  TextFormField(
+                    initialValue: data.title,
+                    decoration: const InputDecoration(
+                      labelText: 'Project Title *',
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Enter title';
+                      if (widget.titleValidator != null)
+                        return widget.titleValidator!(v.trim());
+                      return null;
+                    },
+                    onSaved: (v) => data.title = v!.trim(),
+                  ),
+                  // Date picker
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: data.started,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) setState(() => data.started = picked);
+                    },
+                    child: AbsorbPointer(
+                      child: TextFormField(
                         decoration: const InputDecoration(
-                          labelText: 'Project Title *',
+                          labelText: 'Started Date *',
                         ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty)
-                            return 'Enter title';
-                          if (widget.titleValidator != null)
-                            return widget.titleValidator!(v.trim());
-                          return null;
-                        },
-                        onSaved: (v) => data.title = v!.trim(),
-                      ),
-                      // Date picker
-                      GestureDetector(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: data.started,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null)
-                            setState(() => data.started = picked);
-                        },
-                        child: AbsorbPointer(
-                          child: TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Started Date *',
-                            ),
-                            controller: TextEditingController(
-                              text: _dateString(data.started),
-                            ),
-                          ),
+                        controller: TextEditingController(
+                          text: _dateString(data.started),
                         ),
                       ),
-                      // Priority
-                      DropdownButtonFormField<String>(
-                        initialValue: data.priority,
-                        items: ['High', 'Medium', 'Low']
-                            .map(
-                              (p) => DropdownMenuItem(value: p, child: Text(p)),
-                            )
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => data.priority = v ?? data.priority),
-                        decoration: const InputDecoration(
-                          labelText: 'Priority *',
-                        ),
-                      ),
-                    ];
-                    if (widget.showStatus) {
-                      fields.add(
-                        DropdownButtonFormField<String>(
-                          initialValue: data.status,
-                          items: ['In Progress', 'Completed', 'Not Started']
+                    ),
+                  ),
+                  // Priority
+                  DropdownButtonFormField<String>(
+                    initialValue: data.priority,
+                    items: ['High', 'Medium', 'Low']
+                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => data.priority = v ?? data.priority),
+                    decoration: const InputDecoration(labelText: 'Priority *'),
+                  ),
+                ];
+                if (widget.showStatus) {
+                  fields.add(
+                    DropdownButtonFormField<String>(
+                      initialValue: data.status,
+                      items: ['In Progress', 'Completed', 'Not Started']
+                          .map(
+                            (p) => DropdownMenuItem(value: p, child: Text(p)),
+                          )
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => data.status = v ?? data.status),
+                      decoration: const InputDecoration(labelText: 'Status *'),
+                    ),
+                  );
+                }
+                if (widget.showExecutor) {
+                  fields.add(
+                    DropdownButtonFormField<String>(
+                      initialValue: (data.executor?.isEmpty ?? true)
+                          ? null
+                          : data.executor,
+                      items:
+                          (widget.executors ??
+                                  const [
+                                    'Emma Carter',
+                                    'Liam Walker',
+                                    'Olivia Harris',
+                                    'Noah Clark',
+                                    'Ava Lewis',
+                                    'William Hall',
+                                    'Sophia Young',
+                                    'James Wright',
+                                    'Isabella King',
+                                  ])
                               .map(
-                                (p) =>
-                                    DropdownMenuItem(value: p, child: Text(p)),
+                                (n) =>
+                                    DropdownMenuItem(value: n, child: Text(n)),
                               )
                               .toList(),
-                          onChanged: (v) =>
-                              setState(() => data.status = v ?? data.status),
-                          decoration: const InputDecoration(
-                            labelText: 'Status *',
-                          ),
-                        ),
-                      );
-                    }
-                    if (widget.showExecutor) {
-                      fields.add(
-                        DropdownButtonFormField<String>(
-                          initialValue: (data.executor?.isEmpty ?? true)
-                              ? null
-                              : data.executor,
-                          items:
-                              (widget.executors ??
-                                      const [
-                                        'Emma Carter',
-                                        'Liam Walker',
-                                        'Olivia Harris',
-                                        'Noah Clark',
-                                        'Ava Lewis',
-                                        'William Hall',
-                                        'Sophia Young',
-                                        'James Wright',
-                                        'Isabella King',
-                                      ])
-                                  .map(
-                                    (n) => DropdownMenuItem(
-                                      value: n,
-                                      child: Text(n),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged: (v) =>
-                              setState(() => data.executor = v ?? ''),
-                          decoration: const InputDecoration(
-                            labelText: 'Executor (optional)',
-                          ),
-                        ),
-                      );
-                    }
+                      onChanged: (v) => setState(() => data.executor = v ?? ''),
+                      decoration: const InputDecoration(
+                        labelText: 'Executor (optional)',
+                      ),
+                    ),
+                  );
+                }
 
-                    return Column(
-                      children: [
-                        for (int i = 0; i < fields.length; i++) ...[
-                          fields[i],
-                          if (i != fields.length - 1)
-                            const SizedBox(height: 12),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      'Description *',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-                TextFormField(
-                  initialValue: data.description,
-                  minLines: 10,
-                  maxLines: 16,
-                  textAlignVertical: TextAlignVertical.top,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter description...',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.all(12),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Enter description'
-                      : null,
-                  onSaved: (v) => data.description = v!.trim(),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                return Column(
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          _formKey.currentState?.save();
-                          widget.onSubmit(data);
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: const Text('Create'),
-                    ),
+                    for (int i = 0; i < fields.length; i++) ...[
+                      fields[i],
+                      if (i != fields.length - 1) const SizedBox(height: 12),
+                    ],
                   ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 6),
+                child: Text(
+                  'Description *',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            TextFormField(
+              initialValue: data.description,
+              minLines: 10,
+              maxLines: 16,
+              textAlignVertical: TextAlignVertical.top,
+              decoration: const InputDecoration(
+                hintText: 'Enter description...',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.all(12),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Enter description' : null,
+              onSaved: (v) => data.description = v!.trim(),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      _formKey.currentState?.save();
+                      widget.onSubmit(data);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('Create'),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

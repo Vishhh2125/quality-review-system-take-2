@@ -23,6 +23,17 @@ class ProjectService {
     final startedStr = (j['start_date'] ?? j['started']).toString();
     final started = DateTime.tryParse(startedStr) ?? DateTime.now();
 
+    // Get description from backend
+    final description = j['description']?.toString();
+
+    // Get priority from backend and map to frontend format
+    final priorityRaw = (j['priority'] ?? 'medium').toString().toLowerCase();
+    final priority = switch (priorityRaw) {
+      'high' => 'High',
+      'low' => 'Low',
+      _ => 'Medium',
+    };
+
     // Handle populated created_by field
     String? creatorId;
     String? creatorName;
@@ -37,9 +48,9 @@ class ProjectService {
     return Project(
       id: id,
       title: title.isEmpty ? 'Untitled' : title,
-      description: null, // Can add if needed
+      description: description,
       started: started,
-      priority: 'Medium', // not in backend model; default
+      priority: priority,
       status: status,
       executor: creatorName ?? creatorId, // Use creator name or ID
       assignedEmployees: null, // Fetched separately via ProjectMembership
@@ -52,9 +63,16 @@ class ProjectService {
       'Completed' => 'completed',
       _ => 'pending',
     };
+    String priority = switch (p.priority) {
+      'High' => 'high',
+      'Low' => 'low',
+      _ => 'medium',
+    };
     return {
       'project_name': p.title,
+      if (p.description != null) 'description': p.description,
       'status': status,
+      'priority': priority,
       'start_date': p.started.toIso8601String(),
       if (userId != null) 'created_by': userId,
     };
@@ -65,6 +83,12 @@ class ProjectService {
     final json = await http.getJson(uri);
     final data = (json['data'] as List).cast<dynamic>();
     return data.map((e) => _fromApi(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Project> getById(String id) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/projects/$id');
+    final json = await http.getJson(uri);
+    return _fromApi(json['data'] as Map<String, dynamic>);
   }
 
   Future<Project> create(Project p, {required String userId}) async {

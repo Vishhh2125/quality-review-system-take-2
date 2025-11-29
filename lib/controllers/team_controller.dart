@@ -103,6 +103,8 @@ class TeamController extends GetxController {
   // Simple filters stored as reactive values
   final RxList<String> selectedRoles = <String>[].obs;
   final RxList<String> selectedStatuses = <String>[].obs;
+  // Search query for name/email filtering
+  final RxString searchQuery = ''.obs;
 
   List<TeamMember> get filtered {
     // Work on a plain List derived from the reactive members to make filtering predictable.
@@ -113,12 +115,20 @@ class TeamController extends GetxController {
     if (selectedStatuses.isNotEmpty) {
       list = list.where((m) => selectedStatuses.contains(m.status)).toList();
     }
+    final q = searchQuery.value.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      list = list.where((m) {
+        return m.name.toLowerCase().contains(q) ||
+            m.email.toLowerCase().contains(q);
+      }).toList();
+    }
     return list;
   }
 
   void clearFilters() {
     selectedRoles.clear();
     selectedStatuses.clear();
+    searchQuery.value = '';
   }
 
   TeamMember? findById(String id) {

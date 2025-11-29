@@ -98,7 +98,8 @@ class EmployeePage extends StatelessWidget {
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Enter password';
                     if (v.length < 6) return 'Min 6 chars';
-                    if (!RegExp(r'[A-Za-z]').hasMatch(v)) return 'Include letter & number';
+                    if (!RegExp(r'[A-Za-z]').hasMatch(v))
+                      return 'Include letter & number';
                     return null;
                   },
                   onSaved: (v) => password = v!.trim(),
@@ -369,7 +370,43 @@ class EmployeePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+                  // Search bar styled similar to admin dashboard (reactive clear button)
+                  Obx(
+                    () => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search by name or email...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: ctrl.searchQuery.value.isEmpty
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  tooltip: 'Clear search',
+                                  onPressed: () => ctrl.searchQuery.value = '',
+                                ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                        ),
+                        onChanged: (v) => ctrl.searchQuery.value = v,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(

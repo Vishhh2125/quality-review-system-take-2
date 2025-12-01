@@ -20,6 +20,7 @@ class _MyprojectState extends State<Myproject> {
   int? _hoverIndex;
   List<Project> _cachedProjects = [];
   bool _isInitialLoad = true;
+  final Set<String> _selectedStatuses = {};
 
   @override
   void initState() {
@@ -63,6 +64,11 @@ class _MyprojectState extends State<Myproject> {
 
   List<Project> _getMyProjects() {
     List<Project> list = _cachedProjects;
+
+    // Apply status filter (empty means show all)
+    if (_selectedStatuses.isNotEmpty) {
+      list = list.where((p) => _selectedStatuses.contains(p.status)).toList();
+    }
 
     if (_searchQuery.trim().isNotEmpty) {
       final query = _searchQuery.toLowerCase();
@@ -111,6 +117,32 @@ class _MyprojectState extends State<Myproject> {
         _ascending = true;
       }
     });
+  }
+
+  Widget _buildFilterChip(String status) {
+    final isSelected = _selectedStatuses.contains(status);
+    return FilterChip(
+      label: Text(status),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedStatuses.add(status);
+          } else {
+            _selectedStatuses.remove(status);
+          }
+        });
+      },
+      selectedColor: Colors.blue[100],
+      checkmarkColor: Colors.blue[800],
+      backgroundColor: Colors.grey[200],
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.blue[900] : Colors.black87,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        fontSize: 13,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    );
   }
 
   Widget _priorityChip(String priority) {
@@ -177,6 +209,40 @@ class _MyprojectState extends State<Myproject> {
                     });
                   },
                 ),
+              ),
+              const SizedBox(height: 16),
+              // Status filter chips
+              Row(
+                children: [
+                  const Text(
+                    'Filter by Status:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildFilterChip('Not Started'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('In Progress'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Completed'),
+                  const Spacer(),
+                  if (_selectedStatuses.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _selectedStatuses.clear();
+                        });
+                      },
+                      icon: const Icon(Icons.clear, size: 16),
+                      label: const Text('Clear Filters'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.blue[700],
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 16),
               _isInitialLoad

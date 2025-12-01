@@ -18,8 +18,15 @@ class AdminDashboardPage extends StatelessWidget {
     String search,
     String sortKey,
     bool ascending,
+    Set<String> statusFilter,
   ) {
     List<Project> list = source.toList();
+
+    // Apply status filter (empty means show all)
+    if (statusFilter.isNotEmpty) {
+      list = list.where((p) => statusFilter.contains(p.status)).toList();
+    }
+
     if (search.trim().isNotEmpty) {
       final q = search.toLowerCase();
       list = list.where((p) {
@@ -55,6 +62,26 @@ class AdminDashboardPage extends StatelessWidget {
   }
 
   void _ensureSeed(ProjectsController ctrl) {}
+
+  Widget _buildFilterChip(AdminDashboardUIController ui, String status) {
+    final isSelected = ui.selectedStatuses.contains(status);
+    return FilterChip(
+      label: Text(status),
+      selected: isSelected,
+      onSelected: (selected) {
+        ui.toggleStatus(status);
+      },
+      selectedColor: Colors.blue[100],
+      checkmarkColor: Colors.blue[800],
+      backgroundColor: Colors.grey[200],
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.blue[900] : Colors.black87,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        fontSize: 13,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +191,7 @@ class AdminDashboardPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
+
                   ElevatedButton.icon(
                     onPressed: () async {
                       final res = await FilePicker.platform.pickFiles(
@@ -189,6 +216,7 @@ class AdminDashboardPage extends StatelessWidget {
                         final io = (p.internalOrderNo ?? '').trim();
                         if (io.isNotEmpty) existingKeys.add('io:${_norm(io)}');
                       }
+
                       for (final p in projCtrl.projects) {
                         _addKeys(p);
                       }
@@ -208,7 +236,9 @@ class AdminDashboardPage extends StatelessWidget {
                         if (io.isNotEmpty) keys.add('io:${_norm(io)}');
 
                         final isDup = keys.any(
-                          (k) => existingKeys.contains(k) || seenImportKeys.contains(k),
+                          (k) =>
+                              existingKeys.contains(k) ||
+                              seenImportKeys.contains(k),
                         );
                         if (isDup) {
                           skipped++;
@@ -225,7 +255,9 @@ class AdminDashboardPage extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Imported $imported, skipped $skipped duplicate(s).'),
+                            content: Text(
+                              'Imported $imported, skipped $skipped duplicate(s).',
+                            ),
                           ),
                         );
                       }
@@ -263,6 +295,38 @@ class AdminDashboardPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Status filter chips
+              Obx(
+                () => Row(
+                  children: [
+                    const Text(
+                      'Filter by Status:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildFilterChip(ui, 'Not Started'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(ui, 'In Progress'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(ui, 'Completed'),
+                    const Spacer(),
+                    if (ui.selectedStatuses.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: ui.clearFilters,
+                        icon: const Icon(Icons.clear, size: 16),
+                        label: const Text('Clear Filters'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.blue[700],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               // Loading / Error states (reactive)
               Obx(() {
                 if (projCtrl.isLoading.value) {
@@ -297,11 +361,13 @@ class AdminDashboardPage extends StatelessWidget {
                 final search = ui.searchQuery.value;
                 final sortKey = ui.sortKey.value;
                 final asc = ui.ascending.value;
+                final statusFilter = ui.selectedStatuses.toSet();
                 final projects = _visibleProjects(
                   rxProjects,
                   search,
                   sortKey,
                   asc,
+                  statusFilter,
                 );
                 return Column(
                   children: [

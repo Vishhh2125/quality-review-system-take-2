@@ -5,6 +5,7 @@ class AdminDashboardUIController extends GetxController {
   final RxString sortKey = 'started'.obs;
   final RxBool ascending = false.obs; // newest first when false for date
   final RxInt hoverIndex = (-1).obs;
+  final RxSet<String> selectedStatuses = <String>{}.obs;
 
   void setSearch(String v) => searchQuery.value = v;
   void toggleSort(String key) {
@@ -18,4 +19,14 @@ class AdminDashboardUIController extends GetxController {
 
   void setHover(int index) => hoverIndex.value = index;
   void clearHover() => hoverIndex.value = -1;
+
+  void toggleStatus(String status) {
+    if (selectedStatuses.contains(status)) {
+      selectedStatuses.remove(status);
+    } else {
+      selectedStatuses.add(status);
+    }
+  }
+
+  void clearFilters() => selectedStatuses.clear();
 }

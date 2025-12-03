@@ -726,7 +726,11 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
   void _initializeData() {
     if (widget.initialData != null) {
       selectedOption = widget.initialData!['answer'];
-      remarkController.text = widget.initialData!['remark'] ?? '';
+      final newRemark = widget.initialData!['remark'] ?? '';
+      // Only update controller text if it has actually changed to avoid cursor issues
+      if (remarkController.text != newRemark) {
+        remarkController.text = newRemark;
+      }
       final imgs = widget.initialData!['images'];
       if (imgs is List) {
         _images = List<Map<String, dynamic>>.from(imgs);
@@ -739,10 +743,15 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
     super.didUpdateWidget(oldWidget);
     // If initialData changed, update the state
     if (widget.initialData != oldWidget.initialData) {
-      setState(() {
-        _initializeData();
-      });
+      _initializeData();
+      setState(() {});
     }
+  }
+
+  @override
+  void dispose() {
+    remarkController.dispose();
+    super.dispose();
   }
 
   void _updateAnswer() {
@@ -809,7 +818,12 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
             Expanded(
               child: TextField(
                 controller: remarkController,
-                onChanged: widget.editable ? (val) => _updateAnswer() : null,
+                onChanged: widget.editable
+                    ? (val) {
+                        // Update answer as user types
+                        _updateAnswer();
+                      }
+                    : null,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -817,6 +831,8 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
                   border: const OutlineInputBorder(borderSide: BorderSide.none),
                 ),
                 enabled: widget.editable,
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
               ),
             ),
             IconButton(

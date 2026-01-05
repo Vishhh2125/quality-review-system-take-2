@@ -113,8 +113,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       {}; // Track checkpoints per checklist
   int _defectsTotal = 0;
   int _totalCheckpoints = 0; // Total number of checkpoints
+  int _loopbackCounter = 0; // Track loopback count for current phase
   Map<String, Map<String, dynamic>> _defectCategories = {};
   final Map<String, String?> _selectedDefectCategory = {};
+  final Map<String, String?> _selectedDefectSeverity = {};
 
   ApprovalService get _approvalService => Get.find<ApprovalService>();
 
@@ -171,20 +173,35 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
   Future<void> _assignDefectCategory(
     String checkpointId,
-    String categoryId,
-  ) async {
+    String? categoryId, {
+    String? severity,
+  }) async {
     try {
       // Persist locally immediately so UI keeps selection across rebuilds
       setState(() {
         _selectedDefectCategory[checkpointId] = categoryId;
+        if (severity != null) {
+          _selectedDefectSeverity[checkpointId] = severity;
+        }
       });
       // Fire-and-update backend (do not block UI stability)
       final checklistService = Get.find<PhaseChecklistService>();
-      await checklistService.assignDefectCategory(checkpointId, categoryId);
-      debugPrint('✓ Category assigned to checkpoint $checkpointId');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category assigned successfully')),
-      );
+      if (categoryId != null) {
+        await checklistService.assignDefectCategory(
+          checkpointId,
+          categoryId,
+          severity: severity,
+        );
+        debugPrint('✓ Category assigned to checkpoint $checkpointId');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Defect category and severity assigned'),
+          ),
+        );
+      } else {
+        // Handle clearing category if backend supports it
+        debugPrint('✓ Category cleared for checkpoint $checkpointId');
+      }
     } catch (e) {
       debugPrint('❌ Error assigning category: $e');
       String errorMessage = e.toString();
@@ -283,7 +300,13 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
       final stageId = (stage['_id'] ?? '').toString();
       _currentStageId = stageId;
-      print('✓ Stage found: $stageId');
+
+      // Load loopback counter from stage data
+      final loopbackCount = (stage['loopback_count'] ?? 0) as int;
+      setState(() {
+        _loopbackCounter = loopbackCount;
+      });
+      print('✓ Stage found: $stageId, Loopback Count: $loopbackCount');
 
       // Step 3: Fetch checklists for this stage
       List<Map<String, dynamic>> checklists = [];
@@ -344,11 +367,17 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 final defectCatId = defect is Map
                     ? (defect['categoryId'] ?? '').toString()
                     : '';
+                final defectSeverity = defect is Map
+                    ? (defect['severity'] ?? '').toString()
+                    : '';
                 final cpId = (cp['_id'] ?? '').toString();
                 if (cpId.isNotEmpty) {
                   _selectedDefectCategory[cpId] = defectCatId.isNotEmpty
                       ? defectCatId
                       : _selectedDefectCategory[cpId];
+                  _selectedDefectSeverity[cpId] = defectSeverity.isNotEmpty
+                      ? defectSeverity
+                      : _selectedDefectSeverity[cpId];
                 }
               } catch (_) {}
               print(
@@ -487,60 +516,68 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _recomputeDefects() {
+    // Compute defects locally from current answers - much simpler and more reliable
+    print('🔍 Starting defect computation...');
+    print('📝 Executor answers: ${executorAnswers.length} entries');
+    print('📝 Reviewer answers: ${reviewerAnswers.length} entries');
+    if (executorAnswers.isNotEmpty) {
+      print('   Sample executor key: ${executorAnswers.keys.first}');
+    }
+    if (reviewerAnswers.isNotEmpty) {
+      print('   Sample reviewer key: ${reviewerAnswers.keys.first}');
+    }
+
     final counts = <String, int>{};
     final checkpointCounts = <String, int>{};
     int total = 0;
-    int totalCheckpoints = 0; // Count total checkpoints
-    String _subKey(Map<String, String> s) => (s['id'] ?? s['text'])!;
+    int totalCheckpoints = 0;
 
     for (final q in checklist) {
-      int c = 0;
-      int qCheckpoints = 0; // Checkpoints in this checklist
-      for (final sub in q.subQuestions) {
-        totalCheckpoints++; // Count each checkpoint
-        qCheckpoints++;
-        final key = _subKey(sub);
-        dynamic a =
-            executorAnswers[key]?['answer'] ??
-            checklistCtrl.getAnswers(
-              widget.projectId,
-              _selectedPhase,
-              'executor',
-              key,
-            )?['answer'];
-        dynamic b =
-            reviewerAnswers[key]?['answer'] ??
-            checklistCtrl.getAnswers(
-              widget.projectId,
-              _selectedPhase,
-              'reviewer',
-              key,
-            )?['answer'];
+      final checklistId = q.checklistId ?? '';
+      int defectCount = 0;
+      final subs = q.subQuestions;
+      final checkpointCount = subs.length;
 
-        String? na;
-        String? nb;
-        if (a is bool) {
-          na = a ? 'yes' : 'no';
-        } else if (a != null) {
-          na = a.toString().trim().toLowerCase();
-        }
-        if (b is bool) {
-          nb = b ? 'yes' : 'no';
-        } else if (b != null) {
-          nb = b.toString().trim().toLowerCase();
+      print('🔍 Checking "${q.mainQuestion}" - ${subs.length} questions');
+
+      for (final sub in subs) {
+        final textKey = (sub['text'] ?? '').toString();
+        final idKey = (sub['id'] ?? '').toString();
+
+        // Try text key first, then id key
+        var execAnswer = executorAnswers[textKey]?['answer'];
+        var reviAnswer = reviewerAnswers[textKey]?['answer'];
+
+        String usedKey = textKey;
+        if (execAnswer == null && idKey.isNotEmpty) {
+          execAnswer = executorAnswers[idKey]?['answer'];
+          reviAnswer = reviewerAnswers[idKey]?['answer'];
+          usedKey = idKey;
         }
 
-        if (na != nb) {
-          // Count as defect if one side answered differently or only one side answered
-          if (!(na == null && nb == null)) {
-            c++;
-            total++;
-          }
+        print(
+          '  Q: "${textKey.length > 50 ? textKey.substring(0, 50) + '...' : textKey}"',
+        );
+        print(
+          '    Key used: "${usedKey.length > 30 ? usedKey.substring(0, 30) + '...' : usedKey}"',
+        );
+        print('    Exec=$execAnswer, Revi=$reviAnswer');
+
+        // Count as defect only if both have answered and answers differ
+        if (execAnswer != null &&
+            reviAnswer != null &&
+            execAnswer != reviAnswer) {
+          defectCount++;
+          print('    🔴 DEFECT!');
         }
       }
-      final id = q.checklistId ?? q.mainQuestion;
-      counts[id] = c;
-      checkpointCounts[id] = qCheckpoints;
+
+      counts[checklistId] = defectCount;
+      checkpointCounts[checklistId] = checkpointCount;
+      total += defectCount;
+      totalCheckpoints += checkpointCount;
+
+      print('  ✓ Defects for this checklist: $defectCount/$checkpointCount');
     }
 
     if (mounted) {
@@ -551,6 +588,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         _totalCheckpoints = totalCheckpoints;
       });
     }
+
+    print(
+      '📊 TOTAL DEFECTS: $total out of $totalCheckpoints questions = ${totalCheckpoints > 0 ? (total / totalCheckpoints * 100).toStringAsFixed(2) : "0.00"}%',
+    );
   }
 
   Future<void> _computeActivePhase() async {
@@ -562,6 +603,11 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         final st2 = await _approvalService.getStatus(widget.projectId, 2);
         if (st2 != null && st2['status'] == 'approved') {
           active = 3;
+          final st3 = await _approvalService.getStatus(widget.projectId, 3);
+          if (st3 != null && st3['status'] == 'approved') {
+            // Phase 3 approved - project is completed
+            active = 4;
+          }
         }
       }
     } catch (_) {}
@@ -742,6 +788,27 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       widget.projectId,
                       _selectedPhase,
                     );
+
+                    // Clear submission cache to force reload from backend
+                    checklistCtrl.clearProjectCache(widget.projectId);
+
+                    // Increment loopback counter for the current stage
+                    if (_currentStageId != null &&
+                        _currentStageId!.isNotEmpty) {
+                      try {
+                        final stageService = Get.find<StageService>();
+                        await stageService.incrementLoopbackCounter(
+                          _currentStageId!,
+                        );
+                        print(
+                          '✓ Loopback counter incremented for stage: $_currentStageId',
+                        );
+                      } catch (e) {
+                        print('⚠️ Failed to increment loopback counter: $e');
+                        // Don't fail the revert if counter increment fails
+                      }
+                    }
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Reverted to current stage.'),
@@ -819,10 +886,19 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     ),
                   if (isSDH)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: _DefectSummaryBar(
-                        totalDefects: _defectsTotal,
-                        totalCheckpoints: _totalCheckpoints,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0,
+                        vertical: 8.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _DefectSummaryBar(
+                            totalDefects: _defectsTotal,
+                            totalCheckpoints: _totalCheckpoints,
+                          ),
+                          _LoopbackCounterBar(loopbackCount: _loopbackCounter),
+                        ],
                       ),
                     ),
                   if (_editMode)
@@ -906,6 +982,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                           answers: executorAnswers,
                           otherAnswers: reviewerAnswers,
                           selectedDefectCategory: _selectedDefectCategory,
+                          selectedDefectSeverity: _selectedDefectSeverity,
                           defectsByChecklist: _defectsByChecklist,
                           checkpointsByChecklist: _checkpointsByChecklist,
                           showDefects: isSDH,
@@ -921,9 +998,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                 ? executorExpanded.remove(idx)
                                 : executorExpanded.add(idx),
                           ),
-                          onAnswer: (subQ, ans) {
+                          onAnswer: (subQ, ans) async {
                             setState(() => executorAnswers[subQ] = ans);
-                            checklistCtrl.setAnswer(
+                            await checklistCtrl.setAnswer(
                               widget.projectId,
                               _selectedPhase,
                               'executor',
@@ -962,6 +1039,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                           answers: reviewerAnswers,
                           otherAnswers: executorAnswers,
                           selectedDefectCategory: _selectedDefectCategory,
+                          selectedDefectSeverity: _selectedDefectSeverity,
                           defectsByChecklist: _defectsByChecklist,
                           checkpointsByChecklist: _checkpointsByChecklist,
                           showDefects: isSDH,
@@ -977,9 +1055,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                 ? reviewerExpanded.remove(idx)
                                 : reviewerExpanded.add(idx),
                           ),
-                          onAnswer: (subQ, ans) {
+                          onAnswer: (subQ, ans) async {
                             setState(() => reviewerAnswers[subQ] = ans);
-                            checklistCtrl.setAnswer(
+                            await checklistCtrl.setAnswer(
                               widget.projectId,
                               _selectedPhase,
                               'reviewer',
@@ -1179,6 +1257,7 @@ class _RoleColumn extends StatelessWidget {
   final Set<String> highlightSubs;
   final ChecklistController checklistCtrl;
   final Map<String, String?> selectedDefectCategory;
+  final Map<String, String?> selectedDefectSeverity;
   final bool editMode;
   final Future<void> Function()? onRefresh;
   final Function(int) onExpand;
@@ -1190,7 +1269,7 @@ class _RoleColumn extends StatelessWidget {
   final Map<String, dynamic>? Function(String?)? getCategoryInfo;
   final List<Map<String, dynamic>>
   availableCategories; // Added: for category assignment
-  final Function(String checkpointId, String categoryId)?
+  final Function(String checkpointId, String? categoryId, {String? severity})?
   onCategoryAssigned; // Added: callback for category assignment
 
   const _RoleColumn({
@@ -1207,6 +1286,7 @@ class _RoleColumn extends StatelessWidget {
     required this.highlightSubs,
     required this.checklistCtrl,
     required this.selectedDefectCategory,
+    required this.selectedDefectSeverity,
     required this.onExpand,
     required this.onAnswer,
     required this.onSubmit,
@@ -1585,6 +1665,8 @@ class _RoleColumn extends StatelessWidget {
                                         checkpointId: key,
                                         selectedCategoryId:
                                             selectedDefectCategory[key],
+                                        selectedSeverity:
+                                            selectedDefectSeverity[key],
                                         availableCategories:
                                             availableCategories,
                                         onCategoryAssigned: canEdit
@@ -1656,7 +1738,6 @@ class _DefectSummaryBar extends StatelessWidget {
     final hasDefects = totalDefects > 0;
 
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -1665,6 +1746,7 @@ class _DefectSummaryBar extends StatelessWidget {
         border: Border.all(color: hasDefects ? Colors.redAccent : Colors.green),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             hasDefects ? Icons.error_outline : Icons.check_circle_outline,
@@ -1699,6 +1781,51 @@ class _DefectSummaryBar extends StatelessWidget {
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoopbackCounterBar extends StatelessWidget {
+  final int loopbackCount;
+  const _LoopbackCounterBar({required this.loopbackCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.purple.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.purple),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.history, size: 22, color: Colors.purple.shade700),
+          const SizedBox(width: 10),
+          const Text(
+            'Loopback Counter',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.purple,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '$loopbackCount',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -1808,9 +1935,11 @@ class SubQuestionCard extends StatefulWidget {
   final String? checkpointId; // Added: checkpoint ID for category assignment
   final String?
   selectedCategoryId; // New: controlled selected category from parent
+  final String?
+  selectedSeverity; // New: controlled selected severity from parent
   final List<Map<String, dynamic>>
   availableCategories; // Added: list of categories from template
-  final Function(String checkpointId, String categoryId)?
+  final Function(String checkpointId, String? categoryId, {String? severity})?
   onCategoryAssigned; // Added: callback for category assignment
 
   const SubQuestionCard({
@@ -1823,6 +1952,7 @@ class SubQuestionCard extends StatefulWidget {
     this.categoryInfo,
     this.checkpointId,
     this.selectedCategoryId,
+    this.selectedSeverity,
     this.availableCategories = const [],
     this.onCategoryAssigned,
   });
@@ -1834,6 +1964,7 @@ class SubQuestionCard extends StatefulWidget {
 class _SubQuestionCardState extends State<SubQuestionCard> {
   String? selectedOption;
   String? selectedCategory; // Added: for category assignment
+  String? selectedSeverity; // Added: for severity assignment
   final TextEditingController remarkController = TextEditingController();
   List<Map<String, dynamic>> _images = [];
 
@@ -1845,6 +1976,10 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
     // Initialize from parent-selected category, if provided
     if (widget.selectedCategoryId != null) {
       selectedCategory = widget.selectedCategoryId;
+    }
+    // Initialize from parent-selected severity, if provided
+    if (widget.selectedSeverity != null) {
+      selectedSeverity = widget.selectedSeverity;
     }
   }
 
@@ -1904,6 +2039,11 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
     return widget.selectedCategoryId ?? selectedCategory;
   }
 
+  // Controlled selected severity: prefer parent value when provided
+  String? _currentSelectedSeverity() {
+    return widget.selectedSeverity ?? selectedSeverity;
+  }
+
   @override
   void didUpdateWidget(SubQuestionCard oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -1919,6 +2059,14 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
         selectedCategory = widget.selectedCategoryId;
       });
     }
+    // Keep in sync with parent-controlled selected severity
+    if (widget.selectedSeverity != oldWidget.selectedSeverity &&
+        widget.selectedSeverity != null &&
+        widget.selectedSeverity != selectedSeverity) {
+      setState(() {
+        selectedSeverity = widget.selectedSeverity;
+      });
+    }
   }
 
   @override
@@ -1927,7 +2075,7 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
     super.dispose();
   }
 
-  void _updateAnswer() => widget.onAnswer({
+  Future<void> _updateAnswer() => widget.onAnswer({
     "answer": selectedOption,
     "remark": remarkController.text,
     "images": _images,
@@ -1946,7 +2094,7 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
               .map((f) => {'bytes': f.bytes!, 'name': f.name})
               .toList(),
         );
-        _updateAnswer();
+        await _updateAnswer();
       }
     } catch (e) {
       debugPrint('pick images error: $e');
@@ -1978,9 +2126,9 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
           value: "Yes",
           groupValue: selectedOption,
           onChanged: widget.editable
-              ? (val) {
+              ? (val) async {
                   setState(() => selectedOption = val);
-                  _updateAnswer();
+                  await _updateAnswer();
                 }
               : null,
         ),
@@ -1989,9 +2137,9 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
           value: "No",
           groupValue: selectedOption,
           onChanged: widget.editable
-              ? (val) {
+              ? (val) async {
                   setState(() => selectedOption = val);
-                  _updateAnswer();
+                  await _updateAnswer();
                 }
               : null,
         ),
@@ -2000,7 +2148,9 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
             Expanded(
               child: TextField(
                 controller: remarkController,
-                onChanged: widget.editable ? (val) => _updateAnswer() : null,
+                onChanged: widget.editable
+                    ? (val) async => await _updateAnswer()
+                    : null,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -2099,12 +2249,104 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
                         ? (val) {
                             setState(() => selectedCategory = val);
 
-                            if (val != null &&
-                                widget.checkpointId != null &&
+                            if (widget.checkpointId != null &&
                                 widget.onCategoryAssigned != null) {
+                              // Call callback for both null (clear) and non-null values
                               widget.onCategoryAssigned!(
                                 widget.checkpointId!,
                                 val,
+                                severity: _currentSelectedSeverity(),
+                              );
+                            }
+                          }
+                        : null,
+                    underline: Container(
+                      height: 1,
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Defect Severity',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (_currentSelectedSeverity() != null && !widget.editable)
+                  // Display-only mode for reviewer view when not editable
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _currentSelectedSeverity() == 'Critical'
+                            ? Colors.red.shade300
+                            : Colors.orange.shade300,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                      color: _currentSelectedSeverity() == 'Critical'
+                          ? Colors.red.shade50
+                          : Colors.orange.shade50,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _currentSelectedSeverity() == 'Critical'
+                              ? Icons.error
+                              : Icons.warning,
+                          color: _currentSelectedSeverity() == 'Critical'
+                              ? Colors.red
+                              : Colors.orange,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _currentSelectedSeverity()!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _currentSelectedSeverity() == 'Critical'
+                                ? Colors.red.shade800
+                                : Colors.orange.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  DropdownButton<String?>(
+                    isExpanded: true,
+                    value: _currentSelectedSeverity(),
+                    hint: const Text('Select defect severity'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text('Not specified'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Critical',
+                        child: Text('Critical'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Non-Critical',
+                        child: Text('Non-Critical'),
+                      ),
+                    ],
+                    onChanged: widget.editable
+                        ? (val) {
+                            setState(() => selectedSeverity = val);
+                            if (widget.checkpointId != null &&
+                                widget.onCategoryAssigned != null &&
+                                _currentSelectedCategory() != null) {
+                              widget.onCategoryAssigned!(
+                                widget.checkpointId!,
+                                _currentSelectedCategory(),
+                                severity: val,
                               );
                             }
                           }
@@ -2149,9 +2391,9 @@ class _SubQuestionCardState extends State<SubQuestionCard> {
                         right: 4,
                         top: 4,
                         child: GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             setState(() => _images.removeAt(i));
-                            _updateAnswer();
+                            await _updateAnswer();
                           },
                           child: const CircleAvatar(
                             radius: 10,

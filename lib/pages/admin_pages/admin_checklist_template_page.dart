@@ -1055,15 +1055,6 @@ class _QuestionDialogState extends State<_QuestionDialog> {
                 ),
                 maxLines: 3,
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Defect categories will be assigned during the review phase when discrepancies are detected.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
             ],
           ),
         ),

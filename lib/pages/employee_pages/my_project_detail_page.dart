@@ -5,8 +5,10 @@ import '../../models/project.dart';
 import '../../models/project_membership.dart';
 import '../../components/project_detail_info.dart';
 import '../../services/project_membership_service.dart';
+import '../../services/excel_export_service.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/projects_controller.dart';
+import '../../controllers/export_controller.dart';
 import 'checklist.dart';
 
 class MyProjectDetailPage extends StatefulWidget {
@@ -52,13 +54,13 @@ class _MyProjectDetailPageState extends State<MyProjectDetailPage> {
         if (mounted) {
           setState(() {
             _teamLeaders = memberships
-                .where((m) => m.roleName?.toLowerCase() == 'sdh')
+                .where((m) => (m.roleName?.toLowerCase() ?? '') == 'sdh')
                 .toList();
             _executors = memberships
-                .where((m) => m.roleName?.toLowerCase() == 'executor')
+                .where((m) => (m.roleName?.toLowerCase() ?? '') == 'executor')
                 .toList();
             _reviewers = memberships
-                .where((m) => m.roleName?.toLowerCase() == 'reviewer')
+                .where((m) => (m.roleName?.toLowerCase() ?? '') == 'reviewer')
                 .toList();
             _isLoadingAssignments = false;
           });
@@ -114,6 +116,8 @@ class _MyProjectDetailPageState extends State<MyProjectDetailPage> {
             if (_showStartButton()) _buildStartButton(),
             const SizedBox(height: 16),
             _buildChecklistButton(),
+            const SizedBox(height: 16),
+            _buildExportButton(),
           ],
         ),
       ),
@@ -318,9 +322,136 @@ class _MyProjectDetailPageState extends State<MyProjectDetailPage> {
           );
         },
         icon: const Icon(Icons.checklist),
-        label: const Text('Open Phase 1 Checklist'),
+        label: const Text('Open Checklist'),
       ),
     );
+  }
+
+  Widget _buildExportButton() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: OutlinedButton.icon(
+        onPressed: _exportToExcel,
+        icon: const Icon(Icons.download),
+        label: const Text('Export to Excel'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.blue.shade600,
+          side: BorderSide(color: Colors.blue.shade600),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  void _exportToExcel() async {
+    try {
+      // Initialize export controller and service if not already done
+      if (!Get.isRegistered<ExcelExportService>()) {
+        Get.put(
+          ExcelExportService(
+            projectService: Get.find(),
+            membershipService: Get.find(),
+            checklistService: Get.find(),
+            answerService: Get.find(),
+            stageService: Get.find(),
+            templateService: Get.find(),
+          ),
+        );
+      }
+
+      if (!Get.isRegistered<ExportController>()) {
+        Get.put(
+          ExportController(excelExportService: Get.find<ExcelExportService>()),
+        );
+      }
+
+      final exportCtrl = Get.find<ExportController>();
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: const Text('Exporting Project'),
+            content: const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        },
+      );
+
+      // Extract executor and reviewer names BEFORE calling export
+      final executors = _executors
+          .map((m) => m.userName ?? m.userEmail ?? '')
+          .where((n) => n.trim().isNotEmpty)
+          .toList();
+      final reviewers = _reviewers
+          .map((m) => m.userName ?? m.userEmail ?? '')
+          .where((n) => n.trim().isNotEmpty)
+          .toList();
+
+      print('🚀 Exporting with executors: $executors, reviewers: $reviewers');
+      print(
+        '🔍 _executors list: ${_executors.map((m) => '${m.userId}|${m.userName}|${m.userEmail}').toList()}',
+      );
+      print(
+        '🔍 _reviewers list: ${_reviewers.map((m) => '${m.userId}|${m.userName}|${m.userEmail}').toList()}',
+      );
+
+      // Perform export with proper executor/reviewer names
+      final success = await exportCtrl.exportProjectToExcel(
+        _project.id,
+        _project.title,
+        executors: executors,
+        reviewers: reviewers,
+      );
+
+      // Close loading dialog safely
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Export failed: ${exportCtrl.exportError.value ?? "Unknown error"}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Excel file downloaded successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Export error: $e');
+
+      // Close loading dialog if still open
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error during export: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _confirmStart() {

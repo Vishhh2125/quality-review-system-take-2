@@ -160,15 +160,17 @@ class _EmployeeProjectDetailsPageState
                         final leaders = _namesFrom(details.teamLeaderIds);
                         final reviewers = _namesFrom(details.reviewerIds);
                         final executors = _namesFrom(details.executorIds);
-                        Get.to(() => QuestionsScreen(
-                              projectId: proj.id,
-                              projectTitle: proj.title,
-                              leaders: leaders,
-                              reviewers: reviewers,
-                              executors: executors,
-                              initialPhase: phase,
-                              // Optionally deep-link to specific sub-question: pass via initialSubQuestion
-                            ));
+                        Get.to(
+                          () => QuestionsScreen(
+                            projectId: proj.id,
+                            projectTitle: proj.title,
+                            leaders: leaders,
+                            reviewers: reviewers,
+                            executors: executors,
+                            initialPhase: phase,
+                            // Optionally deep-link to specific sub-question: pass via initialSubQuestion
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -333,7 +335,9 @@ class _PhaseCardsState extends State<_PhaseCards> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Row(
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
                               children: [
                                 if (differs) _Badge(label: 'Answers differ'),
                                 if (isOld) _Badge(label: 'View only'),

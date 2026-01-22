@@ -93,15 +93,15 @@ class _MyprojectState extends State<Myproject> {
         });
 
         // Show error snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load projects: $e'),
-            backgroundColor: Colors.red,
-            action: SnackBarAction(
-              label: 'Retry',
-              textColor: Colors.white,
-              onPressed: () => _loadProjects(forceRefresh: true),
-            ),
+        Get.snackbar(
+          'Error',
+          'Failed to load projects: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          mainButton: TextButton(
+            onPressed: () => _loadProjects(forceRefresh: true),
+            child: const Text('Retry', style: TextStyle(color: Colors.white)),
           ),
         );
       }

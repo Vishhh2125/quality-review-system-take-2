@@ -454,12 +454,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 if (val == null) return;
                 // Restrict jumping ahead of active phase
                 if (val > _activePhase) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'You can only proceed to the next phase after approval.',
-                      ),
-                    ),
+                  Get.snackbar(
+                    'Info',
+                    'You can only proceed to the next phase after approval.',
+                    snackPosition: SnackPosition.BOTTOM,
                   );
                   return;
                 }
@@ -492,15 +490,17 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       widget.projectId,
                       _selectedPhase,
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Approved. Next phase created.'),
-                      ),
+                    Get.snackbar(
+                      'Success',
+                      'Approved. Next phase created.',
+                      snackPosition: SnackPosition.BOTTOM,
                     );
                     _loadChecklistData();
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Approve failed: $e')),
+                    Get.snackbar(
+                      'Error',
+                      'Approve failed: $e',
+                      snackPosition: SnackPosition.BOTTOM,
                     );
                   }
                 } else if (value == 'revert') {
@@ -509,15 +509,17 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       widget.projectId,
                       _selectedPhase,
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Reverted to current stage.'),
-                      ),
+                    Get.snackbar(
+                      'Success',
+                      'Reverted to current stage.',
+                      snackPosition: SnackPosition.BOTTOM,
                     );
                     _loadChecklistData();
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Revert failed: $e')),
+                    Get.snackbar(
+                      'Error',
+                      'Revert failed: $e',
+                      snackPosition: SnackPosition.BOTTOM,
                     );
                   }
                 }
@@ -607,12 +609,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                             if (success) {
                               setState(() {});
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Executor checklist submitted successfully',
-                                    ),
-                                  ),
+                                Get.snackbar(
+                                  'Success',
+                                  'Executor checklist submitted successfully',
+                                  snackPosition: SnackPosition.BOTTOM,
                                 );
                               }
                               // Recompute active phase after submit (may have triggered approval)
@@ -633,25 +633,32 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                             itemCount: checklist.length,
                             itemBuilder: (context, index) {
                               final question = checklist[index];
-                              final differsForQuestion = question.subQuestions.any((subQ) {
-                                final exRaw = (executorAnswers[subQ]?['answer']) ??
-                                    (checklistCtrl.getAnswers(
-                                      widget.projectId,
-                                      _selectedPhase,
-                                      'executor',
-                                      subQ,
-                                    )?['answer']);
-                                final rvRaw = (reviewerAnswers[subQ]?['answer']) ??
-                                    (checklistCtrl.getAnswers(
-                                      widget.projectId,
-                                      _selectedPhase,
-                                      'reviewer',
-                                      subQ,
-                                    )?['answer']);
-                                final ex = exRaw is String ? exRaw.trim().toLowerCase() : exRaw;
-                                final rv = rvRaw is String ? rvRaw.trim().toLowerCase() : rvRaw;
-                                return ex != rv;
-                              });
+                              final differsForQuestion = question.subQuestions
+                                  .any((subQ) {
+                                    final exRaw =
+                                        (executorAnswers[subQ]?['answer']) ??
+                                        (checklistCtrl.getAnswers(
+                                          widget.projectId,
+                                          _selectedPhase,
+                                          'executor',
+                                          subQ,
+                                        )?['answer']);
+                                    final rvRaw =
+                                        (reviewerAnswers[subQ]?['answer']) ??
+                                        (checklistCtrl.getAnswers(
+                                          widget.projectId,
+                                          _selectedPhase,
+                                          'reviewer',
+                                          subQ,
+                                        )?['answer']);
+                                    final ex = exRaw is String
+                                        ? exRaw.trim().toLowerCase()
+                                        : exRaw;
+                                    final rv = rvRaw is String
+                                        ? rvRaw.trim().toLowerCase()
+                                        : rvRaw;
+                                    return ex != rv;
+                                  });
                               final isExpanded = executorExpanded.contains(
                                 index,
                               );
@@ -799,12 +806,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                             if (success) {
                               setState(() {});
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Reviewer checklist submitted successfully',
-                                    ),
-                                  ),
+                                Get.snackbar(
+                                  'Success',
+                                  'Reviewer checklist submitted successfully',
+                                  snackPosition: SnackPosition.BOTTOM,
                                 );
                               }
                               await _computeActivePhase();
@@ -824,25 +829,32 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                             itemCount: checklist.length,
                             itemBuilder: (context, index) {
                               final question = checklist[index];
-                              final differsForQuestion = question.subQuestions.any((subQ) {
-                                final exRaw = (executorAnswers[subQ]?['answer']) ??
-                                    (checklistCtrl.getAnswers(
-                                      widget.projectId,
-                                      _selectedPhase,
-                                      'executor',
-                                      subQ,
-                                    )?['answer']);
-                                final rvRaw = (reviewerAnswers[subQ]?['answer']) ??
-                                    (checklistCtrl.getAnswers(
-                                      widget.projectId,
-                                      _selectedPhase,
-                                      'reviewer',
-                                      subQ,
-                                    )?['answer']);
-                                final ex = exRaw is String ? exRaw.trim().toLowerCase() : exRaw;
-                                final rv = rvRaw is String ? rvRaw.trim().toLowerCase() : rvRaw;
-                                return ex != rv;
-                              });
+                              final differsForQuestion = question.subQuestions
+                                  .any((subQ) {
+                                    final exRaw =
+                                        (executorAnswers[subQ]?['answer']) ??
+                                        (checklistCtrl.getAnswers(
+                                          widget.projectId,
+                                          _selectedPhase,
+                                          'executor',
+                                          subQ,
+                                        )?['answer']);
+                                    final rvRaw =
+                                        (reviewerAnswers[subQ]?['answer']) ??
+                                        (checklistCtrl.getAnswers(
+                                          widget.projectId,
+                                          _selectedPhase,
+                                          'reviewer',
+                                          subQ,
+                                        )?['answer']);
+                                    final ex = exRaw is String
+                                        ? exRaw.trim().toLowerCase()
+                                        : exRaw;
+                                    final rv = rvRaw is String
+                                        ? rvRaw.trim().toLowerCase()
+                                        : rvRaw;
+                                    return ex != rv;
+                                  });
                               final isExpanded = reviewerExpanded.contains(
                                 index,
                               );

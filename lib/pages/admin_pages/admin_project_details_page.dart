@@ -350,17 +350,20 @@ class _AdminProjectDetailsPageState extends State<AdminProjectDetailsPage> {
                         );
                         detailsCtrl.seed(latestProject);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Project updated')),
+                          Get.snackbar(
+                            'Success',
+                            'Project updated',
+                            snackPosition: SnackPosition.BOTTOM,
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Error: ${e.toString()}'),
-                              backgroundColor: Colors.red,
-                            ),
+                          Get.snackbar(
+                            'Error',
+                            'Error: ${e.toString()}',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
                           );
                         }
                       }
@@ -587,18 +590,20 @@ class _RoleAssignmentSectionsState extends State<_RoleAssignmentSections> {
       );
       widget.details.updateMeta();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Role assignments saved')));
+        // ScaffoldMessenger.of(
+        //   context,
+        // ).showSnackBar(const SnackBar(content: Text('Role assignments saved')));
+        Get.snackbar("Success", 'Role assignments saved');
       }
       await _hydrateMemberships();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        Get.snackbar(
+          'Error',
+          'Failed: ${e.toString()}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     } finally {

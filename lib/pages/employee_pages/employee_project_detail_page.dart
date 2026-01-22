@@ -160,15 +160,17 @@ class _EmployeeProjectDetailsPageState
                         final leaders = _namesFrom(details.teamLeaderIds);
                         final reviewers = _namesFrom(details.reviewerIds);
                         final executors = _namesFrom(details.executorIds);
-                        Get.to(() => QuestionsScreen(
-                              projectId: proj.id,
-                              projectTitle: proj.title,
-                              leaders: leaders,
-                              reviewers: reviewers,
-                              executors: executors,
-                              initialPhase: phase,
-                              // Optionally deep-link to specific sub-question: pass via initialSubQuestion
-                            ));
+                        Get.to(
+                          () => QuestionsScreen(
+                            projectId: proj.id,
+                            projectTitle: proj.title,
+                            leaders: leaders,
+                            reviewers: reviewers,
+                            executors: executors,
+                            initialPhase: phase,
+                            // Optionally deep-link to specific sub-question: pass via initialSubQuestion
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -289,12 +291,10 @@ class _PhaseCardsState extends State<_PhaseCards> {
               onTap: canOpen
                   ? () => widget.onOpenChecklist(p)
                   : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Phase $p is locked. Complete Phase ${p - 1} first.',
-                          ),
-                        ),
+                      Get.snackbar(
+                        'Locked',
+                        'Phase $p is locked. Complete Phase ${p - 1} first.',
+                        snackPosition: SnackPosition.BOTTOM,
                       );
                     },
               child: Card(
@@ -501,18 +501,21 @@ class _RoleAssignmentSectionsState extends State<_RoleAssignmentSections> {
       );
       widget.details.updateMeta();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Role assignments saved')));
+        Get.snackbar(
+          'Success',
+          'Role assignments saved',
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
       await _hydrateMemberships();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        Get.snackbar(
+          'Error',
+          'Failed: ${e.toString()}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     } finally {

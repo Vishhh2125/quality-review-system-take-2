@@ -26,11 +26,11 @@ class LoginController extends GetxController {
 
     isLoading.value = true;
     try {
-      final auth = Get.put(AuthController());
+      final auth = Get.find<AuthController>();
       final user = await auth.login(email, password);
       final isAdmin = user.role.toLowerCase() == 'admin';
 
-      Get.off(() => isAdmin ? AdminMainLayout() : EmployeeMainLayout());
+      Get.offAll(() => isAdmin ? AdminMainLayout() : EmployeeMainLayout());
 
       // Preload projects for employees after navigation (non-blocking)
       if (!isAdmin) {

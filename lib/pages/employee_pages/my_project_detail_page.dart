@@ -578,12 +578,12 @@ class _MyProjectDetailPageState extends State<MyProjectDetailPage> {
       });
       // Feedback
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Project started'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+        Get.snackbar(
+          'Success',
+          'Project started',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
         );
       }
     } catch (e) {
@@ -592,11 +592,12 @@ class _MyProjectDetailPageState extends State<MyProjectDetailPage> {
         _starting = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to start project: $e'),
-            backgroundColor: Colors.red,
-          ),
+        Get.snackbar(
+          'Error',
+          'Failed to start project: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
       }
     }

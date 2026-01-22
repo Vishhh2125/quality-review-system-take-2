@@ -133,17 +133,20 @@ class AdminDashboardPage extends StatelessWidget {
               );
               await projCtrl.createProjectRemote(newProject);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Project created successfully')),
+                Get.snackbar(
+                  'Success',
+                  'Project created successfully',
+                  snackPosition: SnackPosition.BOTTOM,
                 );
               }
             } catch (e) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: ${e.toString()}'),
-                    backgroundColor: Colors.red,
-                  ),
+                Get.snackbar(
+                  'Error',
+                  'Error: ${e.toString()}',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
                 );
               }
             }
